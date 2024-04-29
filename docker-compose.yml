@@ -1,0 +1,55 @@
+version: '3'
+services:
+  cortex-xsoar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    environment:
+      - DOCKER_TLS=True
+      - DOCKER_HOST=tcp://dind:2376
+      - DOCKER_TLS_CERTDIR=/certs
+      - DOCKER_CERT_PATH=/certs/client
+    command: /bin/sh -c "/tmp/demistoserver-6.12-493375.sh  -- -y -do-not-start-server && /usr/local/demisto/server"
+    volumes:
+      - docker-ca:/certs/ca
+      - docker-client:/certs/client
+    networks:
+      cortex-network:
+        ipv4_address: 10.0.2.20  # Specify the desired IP address for the container
+  dind:
+    image: docker:20.10-dind
+    privileged: True
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - docker-ca:/certs/ca
+      - docker-client:/certs/client
+      - docker:/var/lib/docker
+      - docker-run:/var/run
+      - xsoar-vol:/var/lib/demisto
+    networks:
+      - cortex-network
+
+volumes:
+  docker-ca:
+  docker-client:
+  docker:
+  docker-run:
+  xsoar-vol:
+
+
+networks:
+  cortex-network:
+    ipam:
+      config:
+        - subnet: 10.0.2.15/24
+
+
+
+ #test-image:
+    # modify image to the one you want to test
+  #  image:nom_image
+  #  command: /bin/sh -c "/tmp/demistoserver-6.12-493375.sh  -- -y -do-not-start-server && /usr/local/demisto/server"
+
